@@ -1,0 +1,143 @@
+/* frontend/src/index.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 800px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 90vh; /* Adjust as needed */
+}
+
+.App-header {
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.chat-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.messages-display {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.user-message .message-content {
+  background-color: #dcf8c6;
+  border-radius: 10px 10px 0 10px;
+  padding: 10px 15px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.agent-message {
+  justify-content: flex-start;
+}
+
+.agent-message .message-content {
+  background-color: #e6e6e6;
+  border-radius: 10px 10px 10px 0;
+  padding: 10px 15px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.agent-message.thinking {
+    background-color: #f0f0f0;
+    color: #555;
+    font-style: italic;
+    padding: 8px 12px;
+    border-radius: 5px;
+    display: inline-block;
+    animation: fadeinout 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+
+.input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+.input-area input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin-right: 10px;
+  outline: none;
+}
+
+.input-area button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.input-area button:hover {
+  background-color: #0056b3;
+}
+
+.input-area button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Styles for markdown tables */
+.message-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.message-content th {
+  background-color: #f2f2f2;
+}
