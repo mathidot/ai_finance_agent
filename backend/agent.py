@@ -136,6 +136,49 @@ class FinanceAgentService:
             # Log the error for backend debugging, but return a user-friendly message
             print(f"Error running agent query: {e}")
             return "Sorry, I encountered an error while processing your request. Please try again or rephrase."
+            
+    async def run_query_with_thinking(self, query: str, callback_handler) -> str:
+        """Runs the query through the LangChain agent with a callback handler for streaming thinking process."""
+        try:
+            # Create a new agent executor with the callback handler
+            agent_with_callbacks = self._initialize_agent_with_callbacks(callback_handler)
+            
+            # Run the query with the callback-enabled agent
+            response = await agent_with_callbacks.ainvoke({"input": query})
+            return response["output"]
+        except Exception as e:
+            # Log the error for backend debugging, but return a user-friendly message
+            print(f"Error running agent query with thinking: {e}")
+            return "Sorry, I encountered an error while processing your request. Please try again or rephrase."
+    
+    def _initialize_agent_with_callbacks(self, callback_handler):
+        """Initialize a new agent executor with the provided callback handler."""
+        prompt = hub.pull("hwchase17/react")
+        custom_instructions = """
+        Always use tables to display financial/numerical data.
+        For text data use bullet points and small paragraphs.
+        You are a helpful Qwen Finance Agent.
+        """
+        final_prompt = PromptTemplate.from_template(
+            custom_instructions + "\n" + prompt.template
+        )
+        
+        # Create a new LLM instance with the callback handler
+        llm_with_callbacks = ChatTongyi(
+            model_name="qwen-turbo",
+            temperature=0.0,
+            callbacks=[callback_handler]
+        )
+        
+        agent_chain = create_react_agent(llm_with_callbacks, self.tools, final_prompt)
+        agent_executor = AgentExecutor(
+            agent=agent_chain,
+            tools=self.tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            callbacks=[callback_handler]
+        )
+        return agent_executor
 
 # Instantiate the service globally or in a dependency injection system for FastAPI
 # This ensures the agent is initialized once.

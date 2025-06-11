@@ -1,5 +1,5 @@
 // frontend/src/services/api.ts
-const API_BASE_URL = 'http://localhost:8000'; // Your FastAPI backend URL
+import { API_BASE_URL } from './config';
 
 interface ChatResponse {
   response: string;
@@ -8,7 +8,6 @@ interface ChatResponse {
 
 export const sendMessage = async (query: string): Promise<ChatResponse> => {
   try {
-    console.log("DEBUG: Input query:", query);
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: 'POST',
       headers: {
