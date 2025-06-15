@@ -1,0 +1,12 @@
+# app_config.yaml
+num_of_tickers: 10
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null # 如果没有密码，设为 null 或留空
+
+ticker_data:
+  redis_key: "ashare_tickers_df"
+  redis_ttl_seconds: 86400 # Redis 缓存保存 24 小时 (24 * 3600)
+  update_interval_seconds: 3600 # 每小时检查一次是否需要从源更新

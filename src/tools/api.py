@@ -9,7 +9,6 @@ from src.utils.logging_config import setup_logger
 # 设置日志记录
 logger = setup_logger('api')
 
-
 def get_financial_metrics(symbol: str) -> Dict[str, Any]:
     """获取财务指标数据"""
     logger.info(f"Getting financial indicators for {symbol}...")
@@ -604,3 +603,33 @@ def get_price_data(
         包含价格数据的DataFrame
     """
     return get_price_history(ticker, start_date, end_date)
+
+
+def get_all_a_share_tickers() -> pd.DataFrame:
+    """获取所有A股股票代码和名称
+
+    Returns:
+        包含股票代码和名称的DataFrame
+    """
+    logger.info("Getting all A-share tickers...")
+    try:
+        df = ak.stock_zh_a_spot_em()
+        if df is None or df.empty:
+            logger.warning("No A-share tickers data available.")
+            return pd.DataFrame()
+        df = df[['代码', '名称']]
+        df = df.rename(columns={'代码': 'ticker', '名称': 'name'})
+        logger.info(f"Successfully fetched {len(df)} A-share tickers")
+        return df
+    except Exception as e:
+        logger.error(f"Error getting all A-share tickers: {e}")
+        return pd.DataFrame()
+
+def get_get_bullish_ashares(num_of_tickers: int) -> List[str]:
+    """获取num_of_tickers支看涨的股票
+    Args:
+        指定数量的看涨股票
+    Returns:
+        看涨股票代码列表
+    """
+    

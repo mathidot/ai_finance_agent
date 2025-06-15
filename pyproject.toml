@@ -27,6 +27,7 @@ backoff = "^2.2.1"
 google-genai = "^0.6.0"
 uvicorn = "^0.34.0"
 fastapi = "^0.115.12"
+redis = "^6.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
