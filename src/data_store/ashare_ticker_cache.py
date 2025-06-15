@@ -10,14 +10,16 @@ from typing import Callable, Any, Union
 import json
 from src.tools.api import get_all_a_share_tickers
 
-logger = setup_logger("AShareTickerCache")
+logger = setup_logger("ashare_ticker_cache")
 
-class AShareTickerCache:
-    _instance: 'AShareTickerCache' = None
+class ashare_ticker_cache:
+    _instance: 'ashare_ticker_cache' = None
     _tickers_df: pd.DataFrame = pd.DataFrame()
+    _filtered_tickers: dict[str, str] = {}
     _last_fetched_local_time: float | None = None
     _redis_client: redis.client.Redis | None = None
-    _redis_key: str = "ashare_tickers_df"
+    _redis_tickers_key: str = "ashare_tickers_df"
+    _redis_filtered_tickers_key: str = "ashare_filtered_tickers_df"
     _redis_ttl_seconds: int = app_config.get("ashare_data_ttl_seconds", 24 * 3600)
     _update_interval_seconds: int = app_config.get("update_interval_seconds", 3600)
     _data_fetch_func: Callable[[], pd.DataFrame] = None
@@ -27,7 +29,7 @@ class AShareTickerCache:
     
     def __new__(cls, config = None, data_fetch_func: 'Callable[[], pd.DataFrame]' = None):
         if cls._instance is None:
-            cls._instance = super(AShareTickerCache, cls).__new__(cls)
+            cls._instance = super(ashare_ticker_cache, cls).__new__(cls)
             cls._instance._config = config
             cls._instance._data_fetch_func = data_fetch_func
             redis_port: int = cls._instance._config.get("redis.port", 6379)
@@ -35,9 +37,14 @@ class AShareTickerCache:
             redis_db: int = cls._instance._config.get("redis.db", 0)
             redis_password: str | None = cls._instance._config.get("redis.password", None)
 
-            cls._instance._redis_key = cls._instance._config.get("ticker_data.redis_key", "ashare_tickers_df")
-            cls._instance._redis_ttl_seconds = cls._instance._config.get("ticker_data.redis_ttl_seconds", 24 * 3600)
-            cls._instance._update_interval_seconds = cls._instance._config.get("ticker_data.update_interval_seconds", 3600)
+            cls._instance._redis_tickers_key = cls._instance._config.get(
+                "ticker_data.redis_tickers_key", "ashare_tickers_df")
+            cls._instance._redis_filtered_tickers_key = cls._instance._config.get(
+                "ticker_data.redis_filtered_tickers_key", "ashare_filtered_tickers_df")
+            cls._instance._redis_ttl_seconds = cls._instance._config.get(
+                "ticker_data.redis_ttl_seconds", 24 * 3600)
+            cls._instance._update_interval_seconds = cls._instance._config.get(
+                "ticker_data.update_interval_seconds", 3600)
             
             try:
                 cls._instance._redis_client = redis.StrictRedis(
@@ -66,15 +73,17 @@ class AShareTickerCache:
         if self._redis_client:
             self._load_from_redis()
         
-        is_stale: bool = (self._tickers_df.empty or
-                    self._last_fetched_local_time is None or
-                    (time.time() - self._last_fetched_local_time > self._redis_ttl_seconds))
-        redis_key_exists: bool = False
+        is_stale: bool = (self._tickers_df.empty or not self._filtered_tickers or
+                          self._last_fetched_local_time is None or
+                          (time.time() - self._last_fetched_local_time > self._redis_ttl_seconds))
+        
+        redis_tickers_key_exists: bool = False
         if self._redis_client:
-            redis_key_exists = self._redis_client.exists(self._redis_key)
-            if not redis_key_exists:
+            redis_tickers_key_exists = self._redis_client.exists(self._redis_tickers_key)
+            redis_filtered_tickers_key_exists = self._redis_client.exists(self._redis_filtered_tickers_key)
+            if not redis_tickers_key_exists or redis_filtered_tickers_key_exists:
                 is_stale = False
-        if self._tickers_df.empty or is_stale:
+        if self._tickers_df.empty or not self._filtered_tickers or is_stale:
             logger.info("Ticker cache is empty, stale, or Redis key expired/missing. Attempting to fetch from source.")
             self.update_tickers_from_source(force_update=True)
         else:
@@ -173,4 +182,4 @@ class AShareTickerCache:
         """返回当前内存中的股票代码 DataFrame"""
         return self._tickers_df.copy() # 返回副本，防止外部直接修改缓存数据
 
-ashare_cache = AShareTickerCache(app_config, get_all_a_share_tickers)
+ashare_cache = ashare_ticker_cache(app_config, get_all_a_share_tickers)

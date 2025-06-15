@@ -91,14 +91,22 @@ def technical_analyst_agent(state: AgentState):
     # Calculate price drop
     price_drop = (prices_df['close'].iloc[-1] -
                   prices_df['close'].iloc[-5]) / prices_df['close'].iloc[-5]
-
+    price_drop_details = f"Price drop ({price_drop:.2%}) is not significant enough for a signal. Current RSI: {rsi.iloc[-1]:.2f}."
     # Add price drop signal
     if price_drop < -0.05 and rsi.iloc[-1] < 40:  # 5% drop and RSI below 40
         signals.append('bullish')
         confidence += 0.2  # Increase confidence for oversold conditions
+        price_drop_details = (
+            f"Significant price drop ({price_drop:.2%}) and RSI ({rsi.iloc[-1]:.2f}) "
+            f"({'oversold' if rsi.iloc[-1] < 30 else 'near oversold' if rsi.iloc[-1] < 40 else 'neutral'}) indicates oversold conditions."
+        )
     elif price_drop < -0.03 and rsi.iloc[-1] < 45:  # 3% drop and RSI below 45
         signals.append('bullish')
-        confidence += 0.1
+        confidence += 0.
+        price_drop_details = (
+            f"Moderate price drop ({price_drop:.2%}) and RSI ({rsi.iloc[-1]:.2f}) "
+            f"({'>70 overbought' if rsi.iloc[-1] > 70 else '<30 oversold' if rsi.iloc[-1] < 30 else 'neutral'}) indicates potential oversold conditions."
+        )
 
     # Add reasoning collection
     reasoning = {
@@ -117,6 +125,10 @@ def technical_analyst_agent(state: AgentState):
         "OBV": {
             "signal": signals[3],
             "details": f"OBV slope is {obv_slope:.2f} ({signals[3]})"
+        },
+        "PriceDrop": {
+            "signal": signals[4],
+            "details": price_drop_details
         }
     }
 
@@ -136,6 +148,7 @@ def technical_analyst_agent(state: AgentState):
     confidence = max(bullish_signals, bearish_signals) / total_signals
 
     # Generate the message content
+    # todo: not using this variable
     message_content = {
         "signal": overall_signal,
         "confidence": f"{round(confidence * 100)}%",
@@ -143,27 +156,28 @@ def technical_analyst_agent(state: AgentState):
             "MACD": reasoning["MACD"],
             "RSI": reasoning["RSI"],
             "Bollinger": reasoning["Bollinger"],
-            "OBV": reasoning["OBV"]
+            "OBV": reasoning["OBV"],
+            "PriceDrop": reasoning["PriceDrop"]
         }
     }
 
     # 1. Trend Following Strategy
-    trend_signals = calculate_trend_signals(prices_df)
+    trend_signals: Dict[str, any] = calculate_trend_signals(prices_df)
 
     # 2. Mean Reversion Strategy
-    mean_reversion_signals = calculate_mean_reversion_signals(prices_df)
+    mean_reversion_signals: Dict[str, any] = calculate_mean_reversion_signals(prices_df)
 
     # 3. Momentum Strategy
-    momentum_signals = calculate_momentum_signals(prices_df)
+    momentum_signals: Dict[str, any] = calculate_momentum_signals(prices_df)
 
     # 4. Volatility Strategy
-    volatility_signals = calculate_volatility_signals(prices_df)
+    volatility_signals:  Dict[str, any] = calculate_volatility_signals(prices_df)
 
     # 5. Statistical Arbitrage Signals
-    stat_arb_signals = calculate_stat_arb_signals(prices_df)
+    stat_arb_signals: Dict[str, any] = calculate_stat_arb_signals(prices_df)
 
     # Combine all signals using a weighted ensemble approach
-    strategy_weights = {
+    strategy_weights: Dict[str, float] = {
         'trend': 0.30,
         'mean_reversion': 0.25,  # Increased weight for mean reversion
         'momentum': 0.25,
@@ -171,7 +185,7 @@ def technical_analyst_agent(state: AgentState):
         'stat_arb': 0.05
     }
 
-    combined_signal = weighted_signal_combination({
+    combined_signal: Dict[str, any] = weighted_signal_combination({
         'trend': trend_signals,
         'mean_reversion': mean_reversion_signals,
         'momentum': momentum_signals,
@@ -180,7 +194,7 @@ def technical_analyst_agent(state: AgentState):
     }, strategy_weights)
 
     # Generate detailed analysis report
-    analysis_report = {
+    analysis_report: Dict[str, Dict[str, any]] = {
         "signal": combined_signal['signal'],
         "confidence": f"{round(combined_signal['confidence'] * 100)}%",
         "strategy_signals": {
@@ -236,7 +250,7 @@ def technical_analyst_agent(state: AgentState):
     }
 
 
-def calculate_trend_signals(prices_df):
+def calculate_trend_signals(prices_df) -> Dict[str, any]:
     """
     Advanced trend following strategy using multiple timeframes and indicators
     """
@@ -279,7 +293,7 @@ def calculate_trend_signals(prices_df):
     }
 
 
-def calculate_mean_reversion_signals(prices_df):
+def calculate_mean_reversion_signals(prices_df) -> Dict[str, any]:
     """
     Mean reversion strategy using statistical measures and Bollinger Bands
     """
@@ -323,7 +337,7 @@ def calculate_mean_reversion_signals(prices_df):
     }
 
 
-def calculate_momentum_signals(prices_df):
+def calculate_momentum_signals(prices_df) -> Dict[str, any]:
     """
     Multi-factor momentum strategy with conservative settings
     """
@@ -374,7 +388,7 @@ def calculate_momentum_signals(prices_df):
     }
 
 
-def calculate_volatility_signals(prices_df):
+def calculate_volatility_signals(prices_df) -> Dict[str, any]:
     """
     Optimized volatility calculation with shorter lookback periods
     """
@@ -427,7 +441,7 @@ def calculate_volatility_signals(prices_df):
     }
 
 
-def calculate_stat_arb_signals(prices_df):
+def calculate_stat_arb_signals(prices_df) -> Dict[str, any]:
     """
     Optimized statistical arbitrage signals with shorter lookback periods
     """
@@ -469,12 +483,12 @@ def calculate_stat_arb_signals(prices_df):
     }
 
 
-def weighted_signal_combination(signals, weights):
+def weighted_signal_combination(signals, weights) -> Dict[str, any]:
     """
     Combines multiple trading signals using a weighted approach
     """
     # Convert signals to numeric values
-    signal_values = {
+    signal_values: Dict[str, int] = {
         'bullish': 1,
         'neutral': 0,
         'bearish': -1
